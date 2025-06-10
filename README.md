@@ -4,7 +4,8 @@
 
 Laravel Wayfinder bridges your Laravel backend and TypeScript frontend with zero friction. It automatically generates fully-typed, importable TypeScript functions for your controllers and routes — so you can call your Laravel endpoints directly in your client code just like any other function. No more hardcoding URLs, guessing route parameters, or syncing backend changes manually.
 
-**Note:** Wayfinder is currently in Beta, the API is subject to change prior to the v1.0.0 release. All notable changes will be documented in the [changelog](./CHANGELOG.md).
+> [!IMPORTANT]
+> Wayfinder is currently in Beta, the API is subject to change prior to the v1.0.0 release. All notable changes will be documented in the [changelog](./CHANGELOG.md).
 
 ## Installation
 
@@ -32,7 +33,7 @@ export default defineConfig({
             {
                 name: "wayfinder",
                 run: ["php", "artisan", "wayfinder:generate"],
-                pattern: ["routes/*.php", "app/**/Http/**/*.php"],
+                pattern: ["routes/**/*.php", "app/**/Http/**/*.php"],
             },
         ]),
     ],
@@ -110,7 +111,8 @@ update({ post: 1, author: 2 });
 update({ post: { id: 1 }, author: { id: 2 } });
 ```
 
-**Note:** If you have a `delete` method on your controller, Wayfinder will rename it to `deleteMethod` when generating its functions. This is because `delete` is not allowed as a variable declaration.
+> [!NOTE]
+> If you are using a JavaScript [reserved word](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#reserved_words) such as `delete` or `import`, as a method in your controller, Wayfinder will rename it to `[method name]Method` (`deleteMethod`, `importMethod`) when generating its functions. This is because these words are not allowed as variable declarations in JavaScript.
 
 If you've specified a key for the parameter binding, Wayfinder will detect this and allow you to pass the value in as a property on an object:
 
@@ -142,7 +144,8 @@ import PostController from "@actions/App/Http/Controllers/PostController";
 PostController.show(1);
 ```
 
-**Note:** In the example above, importing the entire controller prevents the `PostController` from being tree-shaken, so all `PostController` actions will be included in your final bundle.
+> [!NOTE]
+> In the example above, importing the entire controller prevents the `PostController` from being tree-shaken, so all `PostController` actions will be included in your final bundle.
 
 ### Importing Named Routes
 
@@ -273,3 +276,19 @@ import { show } from "@actions/App/Http/Controllers/PostController";
 
 const Nav = () => <Link href={show(1)}>Show me the first post</Link>;
 ```
+
+## Contributing
+
+Thank you for considering contributing to Wayfinder! You can read the contribution guide [here](.github/CONTRIBUTING.md).
+
+## Code of Conduct
+
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+
+## Security Vulnerabilities
+
+Please review [our security policy](https://github.com/laravel/wayfinder/security/policy) on how to report security vulnerabilities.
+
+## License
+
+Wayfinder is open-sourced software licensed under the [MIT license](LICENSE.md).

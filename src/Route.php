@@ -97,7 +97,8 @@ class Route
 
         $scheme = $this->scheme() ?? '//';
 
-        return str("/{$this->base->uri}")
+        return str($this->base->uri)
+            ->start('/')
             ->when($this->domain() !== null, fn ($uri) => $uri->prepend("{$scheme}{$this->domain()}"))
             ->replace($defaultParams->keys()->toArray(), $defaultParams->values()->toArray())
             ->toString();
@@ -164,10 +165,45 @@ class Route
 
     private function finalJsMethod(string $method): string
     {
-        $method = match ($method) {
-            'delete' => 'deleteMethod',
-            default => $method,
-        };
+        $reserved = [
+            'break',
+            'case',
+            'catch',
+            'class',
+            'const',
+            'continue',
+            'debugger',
+            'default',
+            'delete',
+            'do',
+            'else',
+            'export',
+            'extends',
+            'false',
+            'finally',
+            'for',
+            'function',
+            'if',
+            'import',
+            'in',
+            'instanceof',
+            'new',
+            'null',
+            'return',
+            'super',
+            'switch',
+            'this',
+            'throw',
+            'true',
+            'try',
+            'typeof',
+            'var',
+            'void',
+            'while',
+            'with',
+        ];
+
+        $method = in_array($method, $reserved) ? $method.'Method' : $method;
 
         if (is_numeric($method)) {
             return 'method'.$method;
