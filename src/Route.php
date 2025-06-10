@@ -2,9 +2,12 @@
 
 namespace Laravel\Wayfinder;
 
+use Closure;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Routing\Route as BaseRoute;
+use Illuminate\Routing\RouteAction;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Js;
 use Illuminate\Support\Str;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
 use ReflectionClass;
@@ -92,11 +95,13 @@ class Route
 
         $scheme = $this->scheme() ?? '//';
 
-        return str($this->base->uri)
+        $uri = str($this->base->uri)
             ->start('/')
             ->when($this->domain() !== null, fn ($uri) => $uri->prepend("{$scheme}{$this->domain()}"))
             ->replace($defaultParams->keys()->toArray(), $defaultParams->values()->toArray())
             ->toString();
+
+        return Js::from($uri, JSON_UNESCAPED_SLASHES)->toHtml();
     }
 
     public function scheme(): ?string
@@ -119,7 +124,17 @@ class Route
 
     public function name(): ?string
     {
-        return $this->base->getName();
+        $name = $this->base->getName();
+
+        if (! $name || Str::endsWith($name, '.') || Str::startsWith($name, 'generated::')) {
+            return null;
+        }
+
+        if (str_contains($name, '::')) {
+            return 'namespaced.'.str_replace('::', '.', $name);
+        }
+
+        return $name;
     }
 
     public function controllerPath(): string
@@ -127,7 +142,13 @@ class Route
         $controller = $this->controller();
 
         if ($controller === '\\Closure') {
-            return $this->relativePath((new ReflectionClosure($this->base->getAction()['uses']))->getFileName());
+            $path = $this->relativePath((new ReflectionClosure($this->closure()))->getFileName());
+
+            if (str_contains($path, 'laravel-serializable-closure')) {
+                return '[serialized-closure]';
+            }
+
+            return $path;
         }
 
         if (! class_exists($controller)) {
@@ -142,7 +163,7 @@ class Route
         $controller = $this->controller();
 
         if ($controller === '\\Closure') {
-            return (new ReflectionClosure($this->base->getAction()['uses']))->getStartLine();
+            return (new ReflectionClosure($this->closure()))->getStartLine();
         }
 
         if (! class_exists($controller)) {
@@ -165,6 +186,13 @@ class Route
 
     private function relativePath(string $path)
     {
-        return ltrim(str_replace(base_path(), '', $path), DIRECTORY_SEPARATOR);
+        return str($path)->replace(base_path(), '')->ltrim(DIRECTORY_SEPARATOR)->replace(DIRECTORY_SEPARATOR, '/')->toString();
+    }
+
+    private function closure(): Closure
+    {
+        return RouteAction::containsSerializedClosure($this->base->getAction())
+            ? unserialize($this->base->getAction('uses'))->getClosure()
+            : $this->base->getAction('uses');
     }
 }
